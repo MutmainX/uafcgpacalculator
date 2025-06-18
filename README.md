@@ -1,4 +1,4 @@
-# GPA-CGPA-Calculator-UAF
+# UAF CGPA Calculator
 
 ### **Manual GPA and CGPA Calculator for Students at the University of Agriculture, Faisalabad**
 *Working on it. New Features Coming Soon...Even Better and Easy for User. In testing phase.*

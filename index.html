@@ -3,118 +3,931 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPA & CGPA Calculator</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>UAF GPA & CGPA Calculator | Redesigned</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* --- RESET & VARS --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --primary: #4f46e5; /* Indigo 600 */
+            --primary-hover: #4338ca;
+            --accent: #ec4899; /* Pink 500 */
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+            --input-bg: #ffffff;
+            --success: #10b981;
+            --error: #ef4444;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 10px;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-float: 0 25px 50px -12px rgba(79, 70, 229, 0.15);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- DYNAMIC BACKGROUND --- */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            background: radial-gradient(circle at 0% 0%, #e0e7ff 0%, transparent 50%),
+                        radial-gradient(circle at 100% 0%, #fce7f3 0%, transparent 50%),
+                        radial-gradient(circle at 100% 100%, #ccfbf1 0%, transparent 50%),
+                        radial-gradient(circle at 0% 100%, #f3f4f6 0%, transparent 50%);
+            filter: blur(60px);
+            opacity: 0.8;
+            animation: breathe 15s ease infinite alternate;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 760px;
+            margin: 60px auto;
+            padding: 0 20px;
+            width: 100%;
+            z-index: 1;
+            flex: 1;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: #fff;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 0.75rem;
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 16px;
+            border: 1px solid var(--border);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            font-size: 2.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sub-header {
+            font-size: 1.1rem;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        /* --- MAIN CARD --- */
+        .main-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            box-shadow: var(--shadow-float);
+            transition: height 0.3s ease;
+        }
+
+        /* --- SEGMENTED CONTROL (TABS) --- */
+        .tab-wrapper {
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: var(--radius-md);
+            display: flex;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .tab-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            background: #fff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* --- SECTIONS ANIMATION --- */
+        .calc-section {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .calc-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- INPUT GROUPS --- */
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 6px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            background: var(--input-bg);
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #cbd5e1;
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.2);
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px dashed var(--border);
+            color: var(--text-sub);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+
+        .btn-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 1.2rem;
+        }
+
+        .btn-icon:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* --- GPA SUBJECT LIST --- */
+        .subject-grid {
+            display: grid;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .subject-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            display: grid;
+            grid-template-columns: 40px 1fr 1fr 100px 80px 40px;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.2s;
+        }
+
+        .subject-card:hover {
+            border-color: var(--primary);
+            transform: scale(1.005);
+        }
+
+        .subject-index {
+            width: 32px;
+            height: 32px;
+            background: #f1f5f9;
+            color: var(--text-sub);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .grade-pill {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+
+        /* --- RESULTS --- */
+        .result-box {
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            color: white;
+            padding: 30px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin-top: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .result-title {
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .result-value {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1;
+            position: relative;
+        }
+
+        /* --- FOOTER --- */
+        .footer {
+            margin-top: auto;
+            padding: 40px 0;
+            text-align: center;
+            color: var(--text-sub);
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .social-row {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .social-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            transition: all 0.2s;
+        }
+
+        .social-icon:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .dev-tag {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            padding: 10px 24px;
+            background: #dcfce7;
+            color: #15803d;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 640px) {
+            h1 { font-size: 2rem; }
+            .main-card { padding: 24px; }
+            
+            .subject-card {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                position: relative;
+            }
+
+            .subject-index { display: none; }
+            
+            .btn-icon {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .input-row { flex-direction: column; }
+        }
+    </style>
 </head>
 <body>
+    <div class="ambient-bg"></div>
+
     <div class="container">
-        <h1>GPA & CGPA Calculator</h1>
-        <h2 class="university">University of Agriculture Faisalabad</h2>
-        
-        <div class="toggle-section">
-            <button id="gpa-mode-btn" class="btn active">GPA Calculator</button>
-            <button id="cgpa-mode-btn" class="btn">CGPA Calculator</button>
-        </div>
+        <header class="header">
+            <span class="badge">Version 3.1 Redesign</span>
+            <h1>CGPA Calculator</h1>
+            <div class="sub-header">University of Agriculture Faisalabad</div>
+        </header>
 
-        <div id="gpa-section">
-            <div class="subjects-container">
-                <div class="subject-count-container">
-                    <input type="number" 
-                           id="subject-count" 
-                           min="1" 
-                           max="80" 
-                           placeholder="Number of Subjects" 
-                           class="subject-count-input">
-                    <button id="add-subject" class="btn-transparent">+ Add</button>
-                </div>
-                <div id="subjects-list"></div>
-            </div>
-            <div class="results">
-                <div class="result-item">
-                    <span>GPA:</span>
-                    <span id="gpa-result">0.00</span>
-                </div>
-                <div class="gpa-suggestion">
-                    After calculating GPA of current semester, you can easily calculate CGPA from CGPA Calculator. Check it out!
-                </div>
-            </div>
-        </div>
-
-        <div id="cgpa-section" style="display:none;">
-            <div class="cgpa-calc-box">
-                <h2>CGPA from Semester GPAs</h2>
-                <div class="cgpa-detail-line" style="margin-bottom:10px; color:#b0d4ff; font-size:14px;">
-                    Enter your GPAs below to get CGPA
-                </div>
-                <div id="gpa-list">
-                    <!-- GPA input rows will be added here -->
-                </div>
-                <button id="add-gpa-btn" class="btn-transparent">+ Add</button>
-                <div class="result-item">
-                    <span>CGPA:</span>
-                    <span id="cgpa-sem-result">0.00</span>
-                </div>
+        <div class="main-card">
+            <div class="tab-wrapper">
+                <button class="tab-btn active" id="cgpa-tab" onclick="switchMode('cgpa')">CGPA Calculator</button>
+                <button class="tab-btn" id="gpa-tab" onclick="switchMode('gpa')">GPA Calculator</button>
             </div>
 
-            <div class="cgpa-calc-box">
-                <h2>CGPA from previous CGPA and Current GPA</h2>
-                <div class="cgpa-detail-line" style="margin-bottom:10px; color:#b0d4ff; font-size:14px;">
-                    Enter your previous CGPA and number of semesters that was for, then enter your current semester GPA
+            <div id="cgpa-section" class="calc-section active">
+
+                <div style="margin-bottom: 40px;">
+                    <div class="section-title">Update Existing CGPA</div>
+                    <div class="input-row">
+                        <div class="input-wrapper">
+                            <label>Previous CGPA</label>
+                            <input type="number" id="prev-cgpa" class="form-input" placeholder="e.g. 3.45" step="0.01" min="0" max="4" oninput="calculateUpdatedCGPA()">
+                        </div>
+                        <div class="input-wrapper">
+                            <label>Total Semesters</label>
+                            <input type="number" id="prev-semesters" class="form-input" placeholder="e.g. 4" step="1" oninput="calculateUpdatedCGPA()">
+                        </div>
+                    </div>
+                    <div class="input-wrapper" style="margin-bottom: 20px;">
+                        <label>Current Semester GPA</label>
+                        <input type="number" id="current-gpa" class="form-input" placeholder="e.g. 3.70" step="0.01" min="0" max="4" oninput="calculateUpdatedCGPA()">
+                    </div>
+
+                    <div class="result-box">
+                        <div class="result-title">Updated CGPA</div>
+                        <div class="result-value" id="updated-cgpa-result">0.00</div>
+                    </div>
                 </div>
-                <div class="update-cgpa-fields" style="margin-bottom:8px;">
-                    <input type="number" id="prev-cgpa" step="0.01" min="0" max="4" placeholder="CGPA" style="width:110px; font-size:14px;">
-                    <input type="number" id="prev-semesters" step="1" min="1" placeholder="Semesters" style="width:110px; font-size:14px;">
-                </div>
-                <div class="update-cgpa-fields" style="margin-bottom:10px;">
-                    <input type="number" id="current-gpa" step="0.01" min="0" max="4" placeholder="Current GPA" style="width:170px; font-size:14px;">
-                </div>
-                <div class="result-item">
-                    <span>CGPA:</span>
-                    <span id="updated-cgpa-result">0.00</span>
+
+                <hr style="border: 0; border-top: 1px dashed var(--border); margin: 30px 0;">
+                
+                <div>
+                    <div class="section-title">Calculate from Semesters</div>
+                    <div id="cgpa-inputs-list">
+                        </div>
+                    <button class="btn-outline" onclick="addGpaInput()">+ Add Another Semester</button>
+                    
+                    <div class="result-box" id="cgpa-result-box" style="display:none; margin-top: 20px; padding: 20px;">
+                         <div class="result-title">Cumulative GPA</div>
+                         <div class="result-value" id="cgpa-sem-result" style="font-size: 2.5rem;">0.00</div>
+                    </div>
                 </div>
             </div>
+
+            <div id="gpa-section" class="calc-section">
+                <div class="input-row" style="align-items: flex-end;">
+                    <div class="input-wrapper">
+                        <label>Number of Subjects</label>
+                        <input type="number" id="subject-count" class="form-input" placeholder="1-12" min="1" max="20">
+                    </div>
+                    <div style="flex: 0 0 120px;">
+                        <button class="btn-primary" onclick="generateSubjects()">Start</button>
+                    </div>
+                </div>
+
+                <div id="subjects-list" class="subject-grid">
+                    </div>
+
+                <div id="gpa-result-container" style="display: none;">
+                    <div class="result-box">
+                        <div class="result-title">Semester GPA</div>
+                        <div class="result-value" id="gpa-result">0.00</div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <footer class="footer">
-        <p class="contact-info">
-            For any issues, feedback, or just to connect, feel free to reach out
-        </p>
-
-        <div class="social-links">
-            <!-- GitHub -->
-            <a href="https://github.com/MutmainX" target="_blank" rel="noopener noreferrer" title="GitHub">
-                <svg class="social-icon" viewBox="0 0 24 24">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
+        <div class="social-row">
+            <a href="https://github.com/MutmainX" target="_blank" class="social-icon" title="GitHub">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
             </a>
-            <!-- LinkedIn -->
-            <a href="https://www.linkedin.com/in/mutmain/" target="_blank" rel="noopener noreferrer" title="LinkedIn">
-                <svg class="social-icon" viewBox="0 0 24 24">
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                </svg>
-            </a>
-
-        </div>
-
-        <!-- Add Android app download section -->
-        <div class="app-download-footer">
-            <span>Get the Android App:</span>
-            <a href="https://github.com/MutmainX/GPA-CGPA-Calculator-UAF/releases/download/v1.0/Calc-CGPA.apk" target="_blank" rel="noopener noreferrer" title="Download Android App">
-                <svg class="social-icon android-icon-footer" viewBox="0 0 24 24">
-                    <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83L6.4 9.48C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
-                </svg>
+            <a href="https://www.linkedin.com/in/mutmain/" target="_blank" class="social-icon" title="LinkedIn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
             </a>
         </div>
-
-        <p class="developer-credit">Developed with ❤️‍🩹 by Mutmain</p>
-
-        <p class="publish-info">
-            Published: 13th April 2025 | Version: 2.5
-        </p>
-
+        <p>Designed with <span style="color:var(--accent)">♥</span> by <span class="dev-tag">Mutmain</span></p>
+        
+        <a href="https://github.com/MutmainX/GPA-CGPA-Calculator-UAF/releases/download/v1.0/Calc-CGPA.apk" target="_blank" class="download-btn">
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M3 22v-20l18 10-18 10z"/></svg>
+            Get Android App
+        </a>
     </footer>
 
-    <script src="script.js"></script>
+    <script>
+        // --- 1. MODE SWITCHING LOGIC ---
+        function switchMode(mode) {
+            const gpaSection = document.getElementById('gpa-section');
+            const cgpaSection = document.getElementById('cgpa-section');
+            const gpaTab = document.getElementById('gpa-tab');
+            const cgpaTab = document.getElementById('cgpa-tab');
+            
+            if (mode === 'gpa') {
+                gpaSection.classList.add('active');
+                cgpaSection.classList.remove('active');
+                gpaTab.classList.add('active');
+                cgpaTab.classList.remove('active');
+            } else {
+                gpaSection.classList.remove('active');
+                cgpaSection.classList.add('active');
+                gpaTab.classList.remove('active');
+                cgpaTab.classList.add('active');
+            }
+        }
+
+        // --- 2. GPA LOGIC (UAF Specific) ---
+        function generateSubjects() {
+            const count = parseInt(document.getElementById('subject-count').value);
+            const container = document.getElementById('subjects-list');
+            const resultContainer = document.getElementById('gpa-result-container');
+            
+            if (!count || count < 1 || count > 80) {
+                alert('Please enter a valid number of subjects (1-20)');
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= count; i++) {
+                const subjectDiv = document.createElement('div');
+                subjectDiv.className = 'subject-card';
+                subjectDiv.innerHTML = `
+                    <div class="subject-index">${i}</div>
+                    <div class="input-wrapper">
+                        <input type="text" class="form-input" placeholder="Subject Name">
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" class="form-input obtained-marks" placeholder="Marks" min="0" step="1" oninput="updateGrade(this); calculateGPA()">
+                    </div>
+                    <div class="input-wrapper">
+                        <select class="form-input form-select total-marks" onchange="updateGrade(this); calculateGPA()">
+                            <option value="20">20</option>
+                            <option value="40">40</option>
+                            <option value="60" selected>60</option>
+                            <option value="80">80</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="grade-pill">-</div>
+                    <button class="btn-icon" onclick="deleteSubject(this)">×</button>
+                `;
+                container.appendChild(subjectDiv);
+            }
+            
+            resultContainer.style.display = 'block';
+        }
+
+        function deleteSubject(btn) {
+            btn.closest('.subject-card').remove();
+            // Re-index
+            document.querySelectorAll('.subject-card').forEach((card, idx) => {
+                card.querySelector('.subject-index').textContent = idx + 1;
+            });
+            calculateGPA();
+        }
+
+        // CORE GRADING LOGIC (PRESERVED FROM ORIGINAL)
+        function getQualityPointsAndGrade(marks, totalMarks) {
+            if (totalMarks == 20) {
+                if (marks >= 16) return { points: 4, grade: 'A' };
+                if (marks >= 15) return { points: 3.67, grade: 'B+' };
+                if (marks >= 14) return { points: 3.33, grade: 'B' };
+                if (marks >= 13) return { points: 3, grade: 'B-' };
+                if (marks >= 12) return { points: 2.67, grade: 'C+' };
+                if (marks >= 11) return { points: 2.33, grade: 'C' };
+                if (marks >= 10) return { points: 2, grade: 'C-' };
+                if (marks >= 9) return { points: 1.5, grade: 'D+' };
+                if (marks >= 8) return { points: 1, grade: 'D' };
+                return { points: 0, grade: 'F' };
+            }
+            if (totalMarks == 40) {
+                if (marks >= 32) return { points: 8, grade: 'A' };
+                if (marks >= 31) return { points: 7.67, grade: 'A-' };
+                if (marks >= 30) return { points: 7.33, grade: 'B+' };
+                if (marks >= 29) return { points: 7, grade: 'B' };
+                if (marks >= 28) return { points: 6.67, grade: 'B-' };
+                if (marks >= 27) return { points: 6.33, grade: 'C+' };
+                if (marks >= 26) return { points: 6, grade: 'C' };
+                if (marks >= 25) return { points: 5.67, grade: 'C-' };
+                if (marks >= 24) return { points: 5.33, grade: 'D+' };
+                if (marks >= 23) return { points: 5, grade: 'D' };
+                if (marks >= 22) return { points: 4.67, grade: 'D-' };
+                if (marks >= 21) return { points: 4.33, grade: 'E+' };
+                if (marks >= 20) return { points: 4, grade: 'E' };
+                if (marks >= 19) return { points: 3.5, grade: 'E-' };
+                if (marks >= 18) return { points: 3, grade: 'F+' };
+                if (marks >= 17) return { points: 2.5, grade: 'F' };
+                if (marks >= 16) return { points: 2, grade: 'F-' };
+                return { points: 0, grade: 'Fail' };
+            }
+            if (totalMarks == 60) {
+                if (marks >= 48) return { points: 12, grade: 'A' };
+                if (marks >= 47) return { points: 11.67, grade: 'A-' };
+                if (marks >= 46) return { points: 11.33, grade: 'B+' };
+                if (marks >= 45) return { points: 11, grade: 'B' };
+                if (marks >= 44) return { points: 10.67, grade: 'B-' };
+                if (marks >= 43) return { points: 10.33, grade: 'C+' };
+                if (marks >= 42) return { points: 10, grade: 'C' };
+                if (marks >= 41) return { points: 9.67, grade: 'C-' };
+                if (marks >= 40) return { points: 9.33, grade: 'D+' };
+                if (marks >= 39) return { points: 9, grade: 'D' };
+                if (marks >= 38) return { points: 8.67, grade: 'D-' };
+                if (marks >= 37) return { points: 8.33, grade: 'E+' };
+                if (marks >= 36) return { points: 8, grade: 'E' };
+                if (marks >= 35) return { points: 7.67, grade: 'E-' };
+                if (marks >= 34) return { points: 7.33, grade: 'F+' };
+                if (marks >= 33) return { points: 7, grade: 'F' };
+                if (marks >= 32) return { points: 6.67, grade: 'F-' };
+                if (marks >= 31) return { points: 6.33, grade: 'G+' };
+                if (marks >= 30) return { points: 6, grade: 'G' };
+                if (marks >= 29) return { points: 5.5, grade: 'G-' };
+                if (marks >= 28) return { points: 5, grade: 'H+' };
+                if (marks >= 27) return { points: 4.5, grade: 'H' };
+                if (marks >= 26) return { points: 4, grade: 'H-' };
+                if (marks >= 25) return { points: 3.5, grade: 'I+' };
+                if (marks >= 24) return { points: 3, grade: 'I' };
+                return { points: 0, grade: 'Fail' };
+            }
+            if (totalMarks == 80) {
+                if (marks >= 64) return { points: 16, grade: 'A' };
+                if (marks >= 63) return { points: 15.67, grade: 'A-' };
+                if (marks >= 62) return { points: 15.33, grade: 'B+' };
+                if (marks >= 61) return { points: 15, grade: 'B' };
+                if (marks >= 60) return { points: 14.67, grade: 'B-' };
+                if (marks >= 59) return { points: 14.33, grade: 'C+' };
+                if (marks >= 58) return { points: 14, grade: 'C' };
+                if (marks >= 57) return { points: 13.67, grade: 'C-' };
+                if (marks >= 56) return { points: 13.33, grade: 'D+' };
+                if (marks >= 55) return { points: 13, grade: 'D' };
+                if (marks >= 54) return { points: 12.67, grade: 'D-' };
+                if (marks >= 53) return { points: 12.33, grade: 'E+' };
+                if (marks >= 52) return { points: 12, grade: 'E' };
+                if (marks >= 51) return { points: 11.67, grade: 'E-' };
+                if (marks >= 50) return { points: 11.33, grade: 'F+' };
+                if (marks >= 49) return { points: 11, grade: 'F' };
+                if (marks >= 48) return { points: 10.67, grade: 'F-' };
+                if (marks >= 47) return { points: 10.33, grade: 'G+' };
+                if (marks >= 46) return { points: 10, grade: 'G' };
+                if (marks >= 45) return { points: 9.67, grade: 'G-' };
+                if (marks >= 44) return { points: 9.33, grade: 'H+' };
+                if (marks >= 43) return { points: 9, grade: 'H' };
+                if (marks >= 42) return { points: 8.67, grade: 'H-' };
+                if (marks >= 41) return { points: 8.33, grade: 'I+' };
+                if (marks >= 40) return { points: 8, grade: 'I' };
+                if (marks >= 39) return { points: 7.5, grade: 'I-' };
+                if (marks >= 38) return { points: 7, grade: 'J+' };
+                if (marks >= 37) return { points: 6.5, grade: 'J' };
+                if (marks >= 36) return { points: 6, grade: 'J-' };
+                if (marks >= 35) return { points: 5.5, grade: 'K+' };
+                if (marks >= 34) return { points: 5, grade: 'K' };
+                if (marks >= 33) return { points: 4.5, grade: 'K-' };
+                if (marks >= 32) return { points: 4, grade: 'L' };
+                return { points: 0, grade: 'Fail' };
+            }
+            if (totalMarks == 100) {
+                if (marks >= 80) return { points: 20, grade: 'A' };
+                if (marks >= 79) return { points: 19.67, grade: 'A-' };
+                if (marks >= 78) return { points: 19.33, grade: 'B+' };
+                if (marks >= 77) return { points: 19, grade: 'B' };
+                if (marks >= 76) return { points: 18.67, grade: 'B-' };
+                if (marks >= 75) return { points: 18.33, grade: 'C+' };
+                if (marks >= 74) return { points: 18, grade: 'C' };
+                if (marks >= 73) return { points: 17.67, grade: 'C-' };
+                if (marks >= 72) return { points: 17.33, grade: 'D+' };
+                if (marks >= 71) return { points: 17, grade: 'D' };
+                if (marks >= 70) return { points: 16.67, grade: 'D-' };
+                if (marks >= 69) return { points: 16.33, grade: 'E+' };
+                if (marks >= 68) return { points: 16, grade: 'E' };
+                if (marks >= 67) return { points: 15.67, grade: 'E-' };
+                if (marks >= 66) return { points: 15.33, grade: 'F+' };
+                if (marks >= 65) return { points: 15, grade: 'F' };
+                if (marks >= 64) return { points: 14.67, grade: 'F-' };
+                if (marks >= 63) return { points: 14.33, grade: 'G+' };
+                if (marks >= 62) return { points: 14, grade: 'G' };
+                if (marks >= 61) return { points: 13.67, grade: 'G-' };
+                if (marks >= 60) return { points: 13.33, grade: 'H+' };
+                if (marks >= 59) return { points: 13, grade: 'H' };
+                if (marks >= 58) return { points: 12.67, grade: 'H-' };
+                if (marks >= 57) return { points: 12.33, grade: 'I+' };
+                if (marks >= 56) return { points: 12, grade: 'I' };
+                if (marks >= 55) return { points: 11.67, grade: 'I-' };
+                if (marks >= 54) return { points: 11.33, grade: 'J+' };
+                if (marks >= 53) return { points: 11, grade: 'J' };
+                if (marks >= 52) return { points: 10.67, grade: 'J-' };
+                if (marks >= 51) return { points: 10.33, grade: 'K+' };
+                if (marks >= 50) return { points: 10, grade: 'K' };
+                if (marks >= 49) return { points: 9.5, grade: 'K-' };
+                if (marks >= 48) return { points: 9, grade: 'L+' };
+                if (marks >= 47) return { points: 8.5, grade: 'L' };
+                if (marks >= 46) return { points: 8, grade: 'L-' };
+                if (marks >= 45) return { points: 7.5, grade: 'M+' };
+                if (marks >= 44) return { points: 7, grade: 'M' };
+                if (marks >= 43) return { points: 6.5, grade: 'M-' };
+                if (marks >= 42) return { points: 6, grade: 'N+' };
+                if (marks >= 41) return { points: 5.5, grade: 'N' };
+                if (marks >= 40) return { points: 5, grade: 'N-' };
+                return { points: 0, grade: 'Fail' };
+            }
+            return { points: 0, grade: 'Invalid' };
+        }
+
+        function getCreditHours(totalMarks) {
+            if (totalMarks == 20) return 1;
+            if (totalMarks == 40) return 2;
+            if (totalMarks == 60) return 3;
+            if (totalMarks == 80) return 4;
+            if (totalMarks == 100) return 5;
+            return 0;
+        }
+
+        function updateGrade(element) {
+            const item = element.closest('.subject-card');
+            const obtained = parseFloat(item.querySelector('.obtained-marks').value) || 0;
+            const total = parseInt(item.querySelector('.total-marks').value) || 0;
+            const display = item.querySelector('.grade-pill');
+            
+            if (obtained > total) {
+                display.textContent = 'Err';
+                display.style.color = 'var(--error)';
+                return;
+            }
+            
+            if (obtained >= 0 && total > 0) {
+                const { grade, points } = getQualityPointsAndGrade(obtained, total);
+                display.textContent = `${grade}`;
+                display.style.color = obtained >= (total * 0.4) ? 'var(--success)' : 'var(--error)';
+            } else {
+                display.textContent = '-';
+                display.style.color = 'var(--text-sub)';
+            }
+        }
+
+        function calculateGPA() {
+            const subjects = document.querySelectorAll('.subject-card');
+            let totalQualityPoints = 0;
+            let totalCredits = 0;
+            
+            subjects.forEach(subject => {
+                const obtained = parseFloat(subject.querySelector('.obtained-marks').value) || 0;
+                const total = parseInt(subject.querySelector('.total-marks').value) || 0;
+                
+                if (obtained >= 0 && total > 0 && obtained <= total) {
+                    const credits = getCreditHours(total);
+                    const { points } = getQualityPointsAndGrade(obtained, total);
+                    totalQualityPoints += points;
+                    totalCredits += credits;
+                }
+            });
+            
+            const gpa = totalCredits > 0 ? (totalQualityPoints / totalCredits).toFixed(2) : '0.00';
+            document.getElementById('gpa-result').textContent = gpa;
+        }
+
+        // --- 3. CGPA LOGIC ---
+        let gpaCount = 0;
+
+        function addGpaInput() {
+            gpaCount++;
+            const container = document.getElementById('cgpa-inputs-list');
+            const row = document.createElement('div');
+            row.className = 'input-row';
+            row.style.alignItems = 'flex-end';
+            row.innerHTML = `
+                <div class="input-wrapper">
+                    <label>Semester ${gpaCount} GPA</label>
+                    <input type="number" class="form-input gpa-value" step="0.01" min="0" max="4" placeholder="e.g. 3.50" oninput="calculateCGPAFromSemesters()">
+                </div>
+                <div style="flex:0 0 45px">
+                     <button class="btn-icon" onclick="removeGpaInput(this)">×</button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        function removeGpaInput(btn) {
+            btn.closest('.input-row').remove();
+            calculateCGPAFromSemesters();
+        }
+
+        function calculateCGPAFromSemesters() {
+            const inputs = document.querySelectorAll('.gpa-value');
+            let sum = 0;
+            let count = 0;
+            
+            inputs.forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val) && val >= 0 && val <= 4) {
+                    sum += val;
+                    count++;
+                }
+            });
+            
+            const resultBox = document.getElementById('cgpa-result-box');
+            if (count > 0) {
+                resultBox.style.display = 'block';
+                document.getElementById('cgpa-sem-result').textContent = (sum / count).toFixed(3);
+            } else {
+                resultBox.style.display = 'none';
+            }
+        }
+
+        function calculateUpdatedCGPA() {
+            const prevCGPA = parseFloat(document.getElementById('prev-cgpa').value) || 0;
+            const semesters = parseInt(document.getElementById('prev-semesters').value) || 0;
+            const currentGPA = parseFloat(document.getElementById('current-gpa').value) || 0;
+            
+            if (prevCGPA > 0 && semesters > 0 && currentGPA > 0) {
+                const newCGPA = ((prevCGPA * semesters) + currentGPA) / (semesters + 1);
+                document.getElementById('updated-cgpa-result').textContent = newCGPA.toFixed(3);
+            } else {
+                document.getElementById('updated-cgpa-result').textContent = '0.00';
+            }
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            // Add two default GPA inputs for the "Calculate from Semesters"
+            addGpaInput();
+            addGpaInput();
+            
+            // Set up Enter key listener
+            document.getElementById('subject-count')?.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') generateSubjects();
+            });
+        };
+    </script>
 </body>
 </html>
